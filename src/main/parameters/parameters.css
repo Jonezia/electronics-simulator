@@ -1,0 +1,9 @@
+#parametersContainer {
+    height: 80%;
+    width: 200px;
+    position: absolute;
+    top: 10%;
+    right: 0;
+    border-radius: 20px 0px 0px 20px;
+    background-color: rgb(185, 238, 255);
+}

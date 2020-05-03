@@ -1,0 +1,7 @@
+#componentsContainer {
+    height: 100%;
+    width: 220px;
+    background-color: rgb(185, 238, 255);
+    position: absolute;
+    left: 0;
+}

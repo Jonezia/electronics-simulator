@@ -1,0 +1,26 @@
+#footerContainer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    background-color: rgb(212,223,237);
+    box-shadow: 0px -1px 0px rgb(146, 146, 146);
+}
+
+.footerText {
+    color: grey;
+    font-size: 10px;
+    padding: 3px 5px 3px 5px;
+}
+
+#footerContainerLeft a, #footerContainerRight a {
+    text-decoration: none;
+    color: grey;
+}
+
+#footerContainerLeft {
+    float: left;
+}
+
+#footerContainerRight {
+    float: right;
+}

@@ -1,0 +1,9 @@
+#titleContainer {
+    width: 100%;
+    background-color: rgb(128, 206, 231);
+}
+
+#title {
+    font-size: 28px;
+    padding: 5px 10px 5px 30px;
+}
