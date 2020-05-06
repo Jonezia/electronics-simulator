@@ -1,0 +1,11 @@
+.componentContainer {
+    width: 100%;
+    background-color: rgb(212,223,237);
+    box-shadow: 0px 1px rgb(146, 146, 146);
+    margin-bottom: 1px;
+}
+
+.componentName {
+    font-size: 14px;
+    padding: 2px 10px 2px 10px;
+}

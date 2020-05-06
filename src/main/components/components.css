@@ -3,5 +3,63 @@
     width: 220px;
     background-color: rgb(185, 238, 255);
     position: absolute;
-    left: 0;
+    box-shadow: 1px 0px rgb(146, 146, 146);
+    display: flex;
+    flex-direction: column;
+}
+
+.maximised {
+    left: 0px;
+    transition: left 1s;
+}
+
+.minimised {
+    left: -220px;
+    transition: left 1s;
+}
+
+#componentsToggle {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-content: center;
+    justify-content: center;
+    right: -30px;
+    top: 10px;
+    background-color: rgb(185, 238, 255);
+    border-radius: 0px 5px 5px 0px;
+    box-shadow: 1px 0px rgb(146, 146, 146),
+    0px 1px rgb(146, 146, 146), 0px -1px rgb(146, 146, 146);
+    cursor: pointer;
+}
+
+#componentsToggleText {
+    cursor: pointer;
+}
+
+#componentsTitle {
+    font-size: 18px;
+    padding: 5px 15px 5px 15px;
+}
+
+#componentsInputContainer {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+#componentsInput {
+    width: 85%;
+}
+
+#componentsListContainer {
+    flex-grow: 1;
+    padding: 10px 7% 10px 7%;
+}
+
+#componentsList {
+    height: 100%;
+    background-color: rgb(235, 246, 255);
+    overflow: scroll;
 }

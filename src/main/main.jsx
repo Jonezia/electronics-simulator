@@ -4,7 +4,7 @@ import Components from './components/components'
 import Grid from './grid/grid'
 import Parameters from './parameters/parameters'
 
-export default function Main() {
+export default function Main(props) {
     return(
         <div id="mainContainer">
             <Components/>
