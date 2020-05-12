@@ -1,11 +1,20 @@
 import './components.css'
-import React from 'react'
+import React,{useState} from 'react'
 
 import Component from './component/component'
 
+let componentsArray = ["Battery","Wire","Resistor"]
+
 export default function Components(props) {
 
-    let toggleComponents = () => {
+    let [componentsInput,setComponentsInput] = useState();
+
+    const handleChange = (e) => {
+        setComponentsInput(e.target.value)
+        console.log(componentsInput)
+    }
+
+    const toggleComponents = () => {
         console.log("clicked")
         let Components = document.getElementById("componentsContainer")
         let Toggle = document.getElementById("componentsToggle")
@@ -26,13 +35,14 @@ export default function Components(props) {
             <p id="componentsTitle">Components</p>
             <div id="componentsInputContainer">
                 <input id="componentsInput"
-                onChange={props.onChangeComponentsInput}/>
+                onChange={handleChange}/>
             </div>
             <div id="componentsListContainer">
                 <div id="componentsList">
-                    <Component name="Battery"/>
-                    <Component name="Wire"/>
-                    <Component name="Resistor"/>
+                    {componentsArray.map(name => {
+                        return <Component name={name} handleClick={props.changeActiveComponent}
+                        active={name === props.activeComponent}/>
+                    })}
                 </div>
             </div>
         </div>

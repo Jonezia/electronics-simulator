@@ -1,11 +1,25 @@
 .componentContainer {
     width: 100%;
-    background-color: rgb(212,223,237);
+    
     box-shadow: 0px 1px rgb(146, 146, 146);
     margin-bottom: 1px;
+    cursor: pointer;
+}
+
+.unselected {
+    background-color: rgb(212,223,237);
+}
+
+.selected {
+    background-color: rgb(104, 104, 104);
+}
+
+.componentContainer:hover {
+    background-color: rgb(104, 104, 104);
 }
 
 .componentName {
     font-size: 14px;
     padding: 2px 10px 2px 10px;
+    cursor: pointer;
 }

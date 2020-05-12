@@ -4,9 +4,15 @@ import newfile from './images/new-file-16.png'
 import play from './images/play-16.png'
 
 export default function Toolbar(props) {
+
+    const clearGrid = () => {
+        let grid = document.getElementById("gridElements");
+        grid.innerHTML = "";
+    }
+
     return(
         <div id="toolbarContainer">
-            <div className="toolbarButton">
+            <div className="toolbarButton" onClick={clearGrid}>
                 <img src={newfile} alt="new"
                 id="newFileImage"></img>
                 <p className="toolbarButtonText">New</p>
