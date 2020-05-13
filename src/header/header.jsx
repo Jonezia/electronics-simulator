@@ -7,7 +7,7 @@ export default function Header(props) {
     return(
         <div id="headerContainer">
             <Title/>
-            <Toolbar/>
+            <Toolbar onClickClearPaper={props.onClickClearPaper}/>
         </div>
     )
 }

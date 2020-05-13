@@ -3,7 +3,7 @@ import React,{useState} from 'react'
 
 import Component from './component/component'
 
-let componentsArray = ["Battery","Wire","Resistor"]
+let componentsArray = ["Battery","Bulb","Resistor"]
 
 export default function Components(props) {
 
@@ -15,7 +15,6 @@ export default function Components(props) {
     }
 
     const toggleComponents = () => {
-        console.log("clicked")
         let Components = document.getElementById("componentsContainer")
         let Toggle = document.getElementById("componentsToggle")
         if (Components.className === "maximised") {
@@ -39,9 +38,9 @@ export default function Components(props) {
             </div>
             <div id="componentsListContainer">
                 <div id="componentsList">
-                    {componentsArray.map(name => {
+                    {componentsArray.map((name,index) => {
                         return <Component name={name} handleClick={props.changeActiveComponent}
-                        active={name === props.activeComponent}/>
+                        active={name === props.activeComponent} key={index}/>
                     })}
                 </div>
             </div>

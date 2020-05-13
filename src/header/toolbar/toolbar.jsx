@@ -6,8 +6,7 @@ import play from './images/play-16.png'
 export default function Toolbar(props) {
 
     const clearGrid = () => {
-        let grid = document.getElementById("gridElements");
-        grid.innerHTML = "";
+        props.onClickClearPaper()
     }
 
     return(

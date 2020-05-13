@@ -16,7 +16,8 @@ export default function Main(props) {
         <div id="mainContainer">
             <Components changeActiveComponent={changeActiveComponent}
             activeComponent={activeComponent}/>
-            <Grid activeComponent={activeComponent}/>
+            <Grid activeComponent={activeComponent}
+            setClearPaper={props.setClearPaper}/>
             <Parameters/>
         </div>
     )
