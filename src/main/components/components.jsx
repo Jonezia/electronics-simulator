@@ -3,7 +3,8 @@ import React,{useState} from 'react'
 
 import Component from './component/component'
 
-let componentsArray = ["Battery","Bulb","Resistor"]
+let componentsArray = ["Cell","Battery","DCPower","ACPower","Bulb","OpenSwitch","ClosedSwitch","Diode","LED",
+"Resistor","VariableResistor","Thermistor","Fuse","Voltmeter","Ammeter"]
 
 export default function Components(props) {
 

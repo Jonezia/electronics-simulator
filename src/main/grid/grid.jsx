@@ -74,8 +74,8 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
         let w = bb.right - bb.left
         let leftNode = this.circle(0,h/2,5).transform("T"+x+","+y);
         let rightNode = this.circle(w,h/2,5).transform("T"+x+","+y);
-        body.attr({fill: "white", stroke: "black", strokeWidth: 1})
         let g = this.g(body,leftNode,rightNode);
+        g.attr({fill: "white", stroke: "black", strokeWidth: 1});
         g.paths = {};
         g.drag(dragMove, dragStart, dragEnd);
         g.updatePaths = updatePaths;
@@ -94,7 +94,7 @@ export default function Grid(props) {
 
     useEffect(() => {
         paper = Snap("#fullGrid");
-        let rect1 = paper.draggableRect(500,200,"Battery")
+        let rect1 = paper.draggableRect(500,200,"Cell")
         let rect2 = paper.draggableRect(300,400,"Resistor")
         let rect3 = paper.draggableRect(700,400,"Bulb")
         rect1.addPath(rect2,"left","right")
@@ -102,7 +102,7 @@ export default function Grid(props) {
     },[]);
 
     const newComponent = (e) => {
-        //let rect = paper.draggableRect(e.clientX-50,e.clientY-126,100,100,props.activeComponent);
+        let rect = paper.draggableRect(e.clientX-50,e.clientY-126,props.activeComponent);
     }
 
     const clearPaper = () => {
@@ -114,17 +114,77 @@ export default function Grid(props) {
         <div id="gridContainer">
             <svg id="fullGrid" onClick={newComponent}>
             <defs>
-                <g id="BatteryTemplate">
-                    <rect x="0" y="0" width="100" height="100" fill="red"></rect>
-                    <text x="0" y="50" fontFamily="Verdana" fontSize="25" fill="blue">Battery</text>
+                <g id="CellTemplate">
+                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
+                    <path d="M 0 50 L 45 50"></path>
+                    <path d="M 45 25 L 45 75"></path>
+                    <path d="M 55 35 L 55 65"></path>
+                    <path d="M 55 50 L 100 50"></path>
                 </g>
                 <g id="BulbTemplate">
-                    <rect x="0" y="0" width="100" height="100" fill="red"></rect>
-                    <text x="0" y="50" fontFamily="Verdana" fontSize="25" fill="blue">Bulb</text>
+                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
+                    <path d="M 0 50 L 100 50"></path>
+                    <clipPath id="bulbMask"><circle cx="50" cy="50" r="20"></circle></clipPath>
+                    <circle cx="50" cy="50" r="20"></circle>
+                    <path d="M 30 30 L 70 70" clip-path="url(#bulbMask)"></path>
+                    <path d="M 70 30 L 30 70" clip-path="url(#bulbMask)"></path>
                 </g>
                 <g id="ResistorTemplate">
-                    <rect x="0" y="0" width="100" height="100" fill="red"></rect>
-                    <text x="0" y="50" fontFamily="Verdana" fontSize="25" fill="blue">Resistor</text>
+                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
+                    <path d="M 0 50 L 100 50"></path>
+                    <rect x="20" y="40" width="60" height="20"></rect>
+                </g>
+                <g id="FuseTemplate">
+                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
+                    <rect x="20" y="40" width="60" height="20"></rect>
+                    <path d="M 0 50 L 100 50"></path>
+                </g>
+                <g id="OpenSwitchTemplate">
+                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
+                    <path d="M 0 50 L 15 50"></path>
+                    <path d="M 85 50 L 100 50"></path>
+                    <circle cx="15" cy="50" r="3"></circle>
+                    <circle cx="85" cy="50" r="3"></circle>
+                    <path d="M 15 47 L 85 30"></path>
+                </g>
+                <g id="ClosedSwitchTemplate">
+                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
+                    <path d="M 0 50 L 15 50"></path>
+                    <path d="M 85 50 L 100 50"></path>
+                    <circle cx="15" cy="50" r="3"></circle>
+                    <circle cx="85" cy="50" r="3"></circle>
+                    <path d="M 15 47 L 85 47"></path>
+                </g>
+                <g id="ThermistorTemplate">
+                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
+                    <path d="M 0 50 L 100 50"></path>
+                    <rect x="20" y="40" width="60" height="20"></rect>
+                    <path d="M 20 67 L 35 67"></path>
+                    <path d="M 35 67 L 80 33"></path>
+                </g>
+                <g id="VariableResistorTemplate">
+                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
+                    <path d="M 0 50 L 100 50"></path>
+                    <rect x="20" y="40" width="60" height="20"></rect>
+                    <path d="M 20 70 L 80 30"></path>
+                    <path d="M 80 30 L 73 30"></path>
+                    <path d="M 80 30 L 80 35"></path>
+                </g>
+                <g id="VoltmeterTemplate">
+                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
+                    <path d="M 0 50 L 100 50"></path>
+                    <circle cx="50" cy="50" r="20"></circle>
+                    <path d="M 50 60 L 40 40"></path>
+                    <path d="M 50 60 L 60 40"></path>
+                </g>
+                <g id="AmmeterTemplate">
+                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
+                    <path d="M 0 50 L 100 50"></path>
+                    <circle cx="50" cy="50" r="20"></circle>
+                    <path d="M 50 40 L 40 60"></path>
+                    <path d="M 50 40 L 60 60"></path>
+                    <clipPath id="ammeterMask"><polygon points="50,40 40,60 60,60"></polygon></clipPath>
+                    <path d="M 0 50 L 100 50" clip-path="url(#ammeterMask)"></path>
                 </g>
             </defs>
             </svg>

@@ -6,7 +6,7 @@ import Parameters from './parameters/parameters'
 
 export default function Main(props) {
 
-    let [activeComponent,setActiveComponent] = useState("Battery");
+    let [activeComponent,setActiveComponent] = useState("Cell");
 
     const changeActiveComponent = (newComponent) => {
         setActiveComponent(newComponent)
