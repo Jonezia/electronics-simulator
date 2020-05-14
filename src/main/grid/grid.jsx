@@ -118,8 +118,20 @@ export default function Grid(props) {
                     <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
                     <path d="M 0 50 L 45 50"></path>
                     <path d="M 45 25 L 45 75"></path>
-                    <path d="M 55 35 L 55 65"></path>
+                    <path d="M 55 40 L 55 60"></path>
                     <path d="M 55 50 L 100 50"></path>
+                </g>
+                <g id="BatteryTemplate">
+                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
+                    <path d="M 0 50 L 27 50"></path>
+                    <path d="M 27 25 L 27 75"></path>
+                    <path d="M 37 40 L 37 60"></path>
+                    <path d="M 37 50 L 43 50"></path>
+                    <path d="M 47 50 L 53 50"></path>
+                    <path d="M 57 50 L 63 50"></path>
+                    <path d="M 63 25 L 63 75"></path>
+                    <path d="M 73 40 L 73 60"></path>
+                    <path d="M 73 50 L 100 50"></path>
                 </g>
                 <g id="BulbTemplate">
                     <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
@@ -185,6 +197,55 @@ export default function Grid(props) {
                     <path d="M 50 40 L 60 60"></path>
                     <clipPath id="ammeterMask"><polygon points="50,40 40,60 60,60"></polygon></clipPath>
                     <path d="M 0 50 L 100 50" clip-path="url(#ammeterMask)"></path>
+                </g>
+                <g id="DiodeTemplate">
+                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
+                    <path d="M 0 50 L 100 50"></path>
+                    <polygon points="63,50 37,35 37,65"></polygon>
+                    <path d="M 63 35 63 65"></path>
+                </g>
+                <g id="LEDTemplate">
+                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
+                    <circle cx="50" cy="50" r="20"></circle>
+                    <path d="M 0 50 L 100 50"></path>
+                    <polygon points="56.5,50 43.5,42.5 43.5,57.5"></polygon>
+                    <path d="M 56.5 42.5 56.5 57.5"></path>
+                    <path d="M 67 28 L 75 20"></path>
+                    <path d="M 75 20 L 72 20"></path>
+                    <path d="M 75 20 L 75 23"></path>
+                    <path d="M 72 33 L 80 25"></path>
+                    <path d="M 80 25 L 77 25"></path>
+                    <path d="M 80 25 L 80 28"></path>
+                </g>
+                <g id="LDRTemplate">
+                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
+                    <circle cx="50" cy="50" r="20"></circle>
+                    <path d="M 0 50 L 100 50"></path>
+                    <rect x="35" y="45" width="30" height="10"></rect>
+                    <path d="M 33 28 L 25 20"></path>
+                    <path d="M 33 28 L 30 28"></path>
+                    <path d="M 33 28 L 33 25"></path>
+                    <path d="M 28 33 L 20 25"></path>
+                    <path d="M 28 33 L 25 33"></path>
+                    <path d="M 28 33 L 28 30"></path>
+                </g>
+                <g id="DCPowerTemplate">
+                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
+                    <path d="M 0 50 L 30 50"></path>
+                    <path d="M 70 50 L 100 50"></path>
+                    <circle cx="30" cy="50" r="3"></circle>
+                    <circle cx="70" cy="50" r="3"></circle>
+                    <path d="M 30 44 L 30 38"></path>
+                    <path d="M 27 41 L 33 41"></path>
+                    <path d="M 67 41 L 73 41"></path>
+                </g>
+                <g id="ACPowerTemplate">
+                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
+                    <path d="M 0 50 L 30 50"></path>
+                    <path d="M 70 50 L 100 50"></path>
+                    <circle cx="30" cy="50" r="3"></circle>
+                    <circle cx="70" cy="50" r="3"></circle>
+                    <path d="M 40 50 L 40 50 A 5 5 0 0 0 50 50 A 5 5 0 1 1 60 50" fill="none"></path>
                 </g>
             </defs>
             </svg>
