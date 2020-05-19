@@ -4,19 +4,20 @@ import Snap from 'snapsvg-cjs'
 
 let paper;
 let lineout = false;
-
-// Define global element methods
+let activepath;
+let activejunction;
 
 Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
+
+    // Define global element methods
+
     Element.prototype.getCoordinates = function() {
         let bb = this.node.getBoundingClientRect()
         return [(bb.left+bb.right)/2,(bb.top+bb.bottom)/2-76];
     }
-});
 
-// Define methods for draggableRect snap class
+    // Define methods for twonodes snap class
 
-Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
     function dragStart(x, y, e) {
         this.current_transform = this.transform();
     }
@@ -31,36 +32,42 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
     }
 
     function updatePaths() {
-        let key;
-        for(key in this.paths) {
-            this.paths[key][0].attr({"path" : this.getPathString(this.paths[key][1],
-                this.paths[key][2],this.paths[key][3])});
-            this.paths[key][0].prependTo(this.paper);
+        let fromCoords;
+        let toCoords;
+        for(let key in this.inNode.paths) {
+            fromCoords = this.inNode.getCoordinates()
+            toCoords = this.inNode.paths[key][0].getCoordinates()
+            this.inNode.paths[key][1].attr({"path":
+                pathStringify(fromCoords[0],fromCoords[1],toCoords[0],toCoords[1])
+            })
+        }
+        for(let key in this.outNode.paths) {
+            fromCoords = this.outNode.getCoordinates()
+            toCoords = this.outNode.paths[key][0].getCoordinates()
+            this.outNode.paths[key][1].attr({"path":
+                pathStringify(fromCoords[0],fromCoords[1],toCoords[0],toCoords[1])
+            })
         }
     }
           
     function getPathString(obj,directionFrom,directionTo) {
-        let p1;
-        let p2;
-        if (directionFrom === "L") {
-            p1 = this.leftNode.getCoordinates();
-        } else {  // directionFrom === "R"
-            p1 = this.rightNode.getCoordinates();
-        } if (directionTo === "L") {
-            p2 = obj.leftNode.getCoordinates();
-        } else {  // directionTo === "R"
-            p2 = obj.rightNode.getCoordinates();
-        }
+        let p1 = (directionFrom === "in") ? this.inNode.getCoordinates() : this.outNode.getCoordinates();
+        let p2 = (directionTo === "in") ? obj.inNode.getCoordinates() : obj.outNode.getCoordinates();
         return pathStringify(p1[0],p1[1],p2[0],p2[1])
     }
 
     function addPath(obj,directionFrom,directionTo) {
-        let id = obj.id;
         let path = this.paper.path(this.getPathString(obj,directionFrom,directionTo))
         .attr({fill:'none', stroke:'black', strokeWidth:1});
         path.prependTo(this.paper);
-        this.paths[id] = [path, obj, directionFrom, directionTo];
-        obj.paths[this.id] = [path, this, directionTo, directionFrom];  
+        let fromNode = (directionFrom === "in") ? this.inNode : this.outNode;
+        let toNode = (directionTo === "in") ? obj.inNode : obj.outNode;
+        if (fromNode.paths.indexOf(toNode) === -1) {
+            fromNode.paths.push([toNode,path]);
+        }
+        if (toNode.paths.indexOf(fromNode) === -1) {
+            toNode.paths.push([fromNode,path]);
+        }
     }
     
     function removePath(obj) {
@@ -75,20 +82,21 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
         }
     }
 
-    Paper.prototype.draggableRect = function (x, y, component) {
+    // twonodes class
+
+    Paper.prototype.twonodes = function (x, y, component) {
         let body = this.use(`${component}Template`).transform("T"+x+","+y);
         let bb = body.node.getBoundingClientRect();
         let h = bb.bottom - bb.top;
         let w = bb.right - bb.left;
-        let leftNode = paper.junction("L",0,h/2,5).transform("T"+x+","+y);
-        let rightNode = paper.junction("R",w,h/2,5).transform("T"+x+","+y);
-        let g = this.g(body,leftNode,rightNode);
-        leftNode.parent = g
-        rightNode.parent = g
-        g.leftNode = leftNode;
-        g.rightNode = rightNode;
+        let inNode = paper.junction("in",0,h/2,5).transform("T"+x+","+y);
+        let outNode = paper.junction("out",w,h/2,5).transform("T"+x+","+y);
+        let g = this.g(body,inNode,outNode);
+        inNode.parent = g
+        outNode.parent = g
+        g.inNode = inNode;
+        g.outNode = outNode;
         g.attr({fill: "white", stroke: "black", strokeWidth: 1});
-        g.paths = {};
         g.drag(dragMove, dragStart, dragEnd);
         g.updatePaths = updatePaths;
         g.getPathString = getPathString;
@@ -97,17 +105,12 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
         
         return g;
     };
-});
 
-// Define methods for junction
+    // Define methods for junction
 
-let activepath
-let activejunction
-
-Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
     function onClick(obj) {
         if (lineout) {
-            // Check if valid connection and make connection
+            // make connection
             this.parent.addPath(activejunction.parent,this.direction,activejunction.direction)
             // remove activepath
             activepath.remove();
@@ -117,17 +120,22 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
             let coords = this.getCoordinates();
             activejunction = this;
             activepath = this.paper.path(pathStringify(coords[0],coords[1],coords[0],coords[1]))
-            .attr({fill:'none', stroke:'black', strokeWidth:1});
+            .attr({fill:'none', stroke:'black', strokeWidth:1, style: "pointer-events: None"});
+            activepath.prependTo(paper)
             lineout = true;
         }
     }
+
+    // junction class
 
     Paper.prototype.junction = function (direction,x,y,r) {
         let junction = this.circle(x,y,r);
         junction.direction = direction;
         junction.click(onClick);
+        junction.paths = []
         return junction
     }
+
 });
 
 // Snap "global" functions
@@ -135,7 +143,6 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
 function onMouseMove(e,x,y) {
     // update activepath
     if (lineout) {
-        console.log("yee")
         let from = activejunction.getCoordinates()
         activepath.attr({"path": pathStringify(from[0],from[1],x,y-76)})
     }
@@ -149,11 +156,11 @@ export default function Grid(props) {
 
     useEffect(() => {
         paper = Snap("#fullGrid");
-        let rect1 = paper.draggableRect(500,200,"Cell")
-        let rect2 = paper.draggableRect(300,400,"Resistor")
-        let rect3 = paper.draggableRect(700,400,"Bulb")
-        rect1.addPath(rect2,"L","R")
-        rect1.addPath(rect3,"R","L")
+        let rect1 = paper.twonodes(500,200,"Cell")
+        let rect2 = paper.twonodes(300,400,"Resistor")
+        let rect3 = paper.twonodes(700,400,"Bulb")
+        rect1.addPath(rect2,"in","out")
+        rect1.addPath(rect3,"out","in")
         
         paper.mousemove(onMouseMove)
 
@@ -165,7 +172,7 @@ export default function Grid(props) {
                 activepath.remove()
                 lineout = false
             }
-            let rect = paper.draggableRect(e.clientX-50,e.clientY-126,props.activeComponent);
+            let rect = paper.twonodes(e.clientX-50,e.clientY-126,props.activeComponent);
         }
     }
 
