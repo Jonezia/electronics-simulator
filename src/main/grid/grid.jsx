@@ -2,6 +2,20 @@ import './grid.css'
 import React,{useEffect} from 'react'
 import Snap from 'snapsvg-cjs'
 
+let paper;
+let lineout;
+
+// Define global element methods
+
+Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
+    Element.prototype.getCoordinates = function() {
+        let bb = this.node.getBoundingClientRect()
+        return [(bb.left+bb.right)/2,(bb.top+bb.bottom)/2-76];
+    }
+});
+
+// Define methods for draggableRect snap class
+
 Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
     function dragStart(x, y, e) {
         this.current_transform = this.transform();
@@ -24,25 +38,19 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
             this.paths[key][0].prependTo(this.paper);
         }
     }
-
-    function getCoordinates(direction) {
-        if (direction === "left") {
-            let bbl = this.select("circle:nth-child(2)").node.getBoundingClientRect()
-            return [(bbl.left+bbl.right)/2,(bbl.top+bbl.bottom)/2-76];
-        }
-        else if (direction === "right") {
-            let bbr = this.select("circle:nth-child(3)").node.getBoundingClientRect()
-            return [(bbr.left+bbr.right)/2,(bbr.top+bbr.bottom)/2-76];
-        }
-        else {
-            let bb = this.getBBox();
-            return [bb.cx,bb.cy];
-        }
-    }
           
     function getPathString(obj,directionFrom,directionTo) {
-        var p1 = this.getCoordinates(directionFrom);
-        var p2 = obj.getCoordinates(directionTo);
+        let p1;
+        let p2;
+        if (directionFrom === "L") {
+            p1 = this.leftNode.getCoordinates();
+        } else {  // directionFrom === "R"
+            p1 = this.rightNode.getCoordinates();
+        } if (directionTo === "L") {
+            p2 = obj.leftNode.getCoordinates();
+        } else {  // directionTo === "R"
+            p2 = obj.rightNode.getCoordinates();
+        }
         return "M"+p1[0]+","+p1[1]+"L"+p2[0]+","+p2[1];
     }
 
@@ -52,11 +60,11 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
         .attr({fill:'none', stroke:'black', strokeWidth:1});
         path.prependTo(this.paper);
         this.paths[id] = [path, obj, directionFrom, directionTo];
-        obj.paths[this.id] = [path, this, directionTo, directionFrom];            
+        obj.paths[this.id] = [path, this, directionTo, directionFrom];  
     }
     
     function removePath(obj) {
-    		var id = obj.id;
+    	var id = obj.id;
         if (this.paths[id] != null) {
         		this.paths[id][0].remove();
             this.paths[id][1] = null;
@@ -70,16 +78,17 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
     Paper.prototype.draggableRect = function (x, y, component) {
         let body = this.use(`${component}Template`).transform("T"+x+","+y);
         let bb = body.node.getBoundingClientRect();
-        let h = bb.bottom - bb.top
-        let w = bb.right - bb.left
-        let leftNode = this.circle(0,h/2,5).transform("T"+x+","+y);
-        let rightNode = this.circle(w,h/2,5).transform("T"+x+","+y);
+        let h = bb.bottom - bb.top;
+        let w = bb.right - bb.left;
+        let leftNode = paper.junction(this,0,h/2,5).transform("T"+x+","+y);
+        let rightNode = paper.junction(this,w,h/2,5).transform("T"+x+","+y);
         let g = this.g(body,leftNode,rightNode);
+        g.leftNode = leftNode;
+        g.rightNode = rightNode;
         g.attr({fill: "white", stroke: "black", strokeWidth: 1});
         g.paths = {};
         g.drag(dragMove, dragStart, dragEnd);
         g.updatePaths = updatePaths;
-        g.getCoordinates = getCoordinates;
         g.getPathString = getPathString;
         g.addPath = addPath;
         g.removePath = removePath;
@@ -88,7 +97,34 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
     };
 });
 
-let paper;
+// Define methods for junction
+
+Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
+    function onClick(obj) {
+        if (lineout) {
+            // Check if valid connection and make connection
+
+            lineout = false
+        }
+        else {
+
+            lineout = true
+        }
+    }
+
+    Paper.prototype.junction = function (parent,x,y,r) {
+        let body = this.circle(x,y,r)
+        body.parent = parent
+        return body
+    }
+});
+
+// Snap "global" functions
+
+function onMouseMove(x,y) {
+    console.log(x)
+    console.log(y)
+}
 
 export default function Grid(props) {
 
@@ -97,12 +133,17 @@ export default function Grid(props) {
         let rect1 = paper.draggableRect(500,200,"Cell")
         let rect2 = paper.draggableRect(300,400,"Resistor")
         let rect3 = paper.draggableRect(700,400,"Bulb")
-        rect1.addPath(rect2,"left","right")
-        rect1.addPath(rect3,"right","left")
+        rect1.addPath(rect2,"L","R")
+        rect1.addPath(rect3,"R","L")
+        
+        paper.mousemove(onMouseMove)
+
     },[]);
 
     const newComponent = (e) => {
-        let rect = paper.draggableRect(e.clientX-50,e.clientY-126,props.activeComponent);
+        if(e.target.id === "fullGrid") {
+            let rect = paper.draggableRect(e.clientX-50,e.clientY-126,props.activeComponent);
+        }
     }
 
     const clearPaper = () => {
@@ -138,8 +179,8 @@ export default function Grid(props) {
                     <path d="M 0 50 L 100 50"></path>
                     <clipPath id="bulbMask"><circle cx="50" cy="50" r="20"></circle></clipPath>
                     <circle cx="50" cy="50" r="20"></circle>
-                    <path d="M 30 30 L 70 70" clip-path="url(#bulbMask)"></path>
-                    <path d="M 70 30 L 30 70" clip-path="url(#bulbMask)"></path>
+                    <path d="M 30 30 L 70 70" clipPath="url(#bulbMask)"></path>
+                    <path d="M 70 30 L 30 70" clipPath="url(#bulbMask)"></path>
                 </g>
                 <g id="ResistorTemplate">
                     <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
@@ -196,7 +237,7 @@ export default function Grid(props) {
                     <path d="M 50 40 L 40 60"></path>
                     <path d="M 50 40 L 60 60"></path>
                     <clipPath id="ammeterMask"><polygon points="50,40 40,60 60,60"></polygon></clipPath>
-                    <path d="M 0 50 L 100 50" clip-path="url(#ammeterMask)"></path>
+                    <path d="M 0 50 L 100 50" clipPath="url(#ammeterMask)"></path>
                 </g>
                 <g id="DiodeTemplate">
                     <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
