@@ -34,14 +34,14 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
     function updatePaths() {
         let fromCoords;
         let toCoords;
-        for(let key in this.inNode.paths) {
+        for (let key in this.inNode.paths) {
             fromCoords = this.inNode.getCoordinates()
             toCoords = this.inNode.paths[key][0].getCoordinates()
             this.inNode.paths[key][1].attr({"path":
                 pathStringify(fromCoords[0],fromCoords[1],toCoords[0],toCoords[1])
             })
         }
-        for(let key in this.outNode.paths) {
+        for (let key in this.outNode.paths) {
             fromCoords = this.outNode.getCoordinates()
             toCoords = this.outNode.paths[key][0].getCoordinates()
             this.outNode.paths[key][1].attr({"path":
@@ -57,29 +57,23 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
     }
 
     function addPath(obj,directionFrom,directionTo) {
+        let fromNode = (directionFrom === "in") ? this.inNode : this.outNode;
+        let toNode = (directionTo === "in") ? obj.inNode : obj.outNode;
+        // check if trying to connect node to itself
+        if (fromNode === toNode) {
+            return
+        }
+        // check if path already exists
+        for (let i in fromNode.paths) {
+            if (fromNode.paths[i][0] === toNode) {
+                return
+            }
+        }
         let path = this.paper.path(this.getPathString(obj,directionFrom,directionTo))
         .attr({fill:'none', stroke:'black', strokeWidth:1});
         path.prependTo(this.paper);
-        let fromNode = (directionFrom === "in") ? this.inNode : this.outNode;
-        let toNode = (directionTo === "in") ? obj.inNode : obj.outNode;
-        if (fromNode.paths.indexOf(toNode) === -1) {
-            fromNode.paths.push([toNode,path]);
-        }
-        if (toNode.paths.indexOf(fromNode) === -1) {
-            toNode.paths.push([fromNode,path]);
-        }
-    }
-    
-    function removePath(obj) {
-    	let id = obj.id;
-        if (this.paths[id] != null) {
-        		this.paths[id][0].remove();
-            this.paths[id][1] = null;
-            delete this.paths[id];
-            
-            obj.paths[this.id][1] = null;
-            delete obj.paths[this.id];
-        }
+        fromNode.paths.push([toNode,path]);
+        toNode.paths.push([fromNode,path]);
     }
 
     // twonodes class
@@ -124,6 +118,10 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
             activepath.prependTo(paper)
             lineout = true;
         }
+    }
+
+    function removePath(obj) {
+        // DO THIS
     }
 
     // junction class
