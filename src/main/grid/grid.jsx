@@ -3,7 +3,7 @@ import React,{useEffect} from 'react'
 import Snap from 'snapsvg-cjs'
 
 let paper;
-let lineout;
+let lineout = false;
 
 // Define global element methods
 
@@ -51,12 +51,12 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
         } else {  // directionTo === "R"
             p2 = obj.rightNode.getCoordinates();
         }
-        return "M"+p1[0]+","+p1[1]+"L"+p2[0]+","+p2[1];
+        return pathStringify(p1[0],p1[1],p2[0],p2[1])
     }
 
     function addPath(obj,directionFrom,directionTo) {
-        var id = obj.id;
-        var path = this.paper.path(this.getPathString(obj,directionFrom,directionTo))
+        let id = obj.id;
+        let path = this.paper.path(this.getPathString(obj,directionFrom,directionTo))
         .attr({fill:'none', stroke:'black', strokeWidth:1});
         path.prependTo(this.paper);
         this.paths[id] = [path, obj, directionFrom, directionTo];
@@ -64,7 +64,7 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
     }
     
     function removePath(obj) {
-    	var id = obj.id;
+    	let id = obj.id;
         if (this.paths[id] != null) {
         		this.paths[id][0].remove();
             this.paths[id][1] = null;
@@ -80,9 +80,11 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
         let bb = body.node.getBoundingClientRect();
         let h = bb.bottom - bb.top;
         let w = bb.right - bb.left;
-        let leftNode = paper.junction(this,0,h/2,5).transform("T"+x+","+y);
-        let rightNode = paper.junction(this,w,h/2,5).transform("T"+x+","+y);
+        let leftNode = paper.junction("L",0,h/2,5).transform("T"+x+","+y);
+        let rightNode = paper.junction("R",w,h/2,5).transform("T"+x+","+y);
         let g = this.g(body,leftNode,rightNode);
+        leftNode.parent = g
+        rightNode.parent = g
         g.leftNode = leftNode;
         g.rightNode = rightNode;
         g.attr({fill: "white", stroke: "black", strokeWidth: 1});
@@ -99,31 +101,48 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
 
 // Define methods for junction
 
+let activepath
+let activejunction
+
 Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
     function onClick(obj) {
         if (lineout) {
             // Check if valid connection and make connection
-
-            lineout = false
+            this.parent.addPath(activejunction.parent,this.direction,activejunction.direction)
+            // remove activepath
+            activepath.remove();
+            lineout = false;
         }
         else {
-
-            lineout = true
+            let coords = this.getCoordinates();
+            activejunction = this;
+            activepath = this.paper.path(pathStringify(coords[0],coords[1],coords[0],coords[1]))
+            .attr({fill:'none', stroke:'black', strokeWidth:1});
+            lineout = true;
         }
     }
 
-    Paper.prototype.junction = function (parent,x,y,r) {
-        let body = this.circle(x,y,r)
-        body.parent = parent
-        return body
+    Paper.prototype.junction = function (direction,x,y,r) {
+        let junction = this.circle(x,y,r);
+        junction.direction = direction;
+        junction.click(onClick);
+        return junction
     }
 });
 
 // Snap "global" functions
 
-function onMouseMove(x,y) {
-    console.log(x)
-    console.log(y)
+function onMouseMove(e,x,y) {
+    // update activepath
+    if (lineout) {
+        console.log("yee")
+        let from = activejunction.getCoordinates()
+        activepath.attr({"path": pathStringify(from[0],from[1],x,y-76)})
+    }
+}
+
+function pathStringify(startx,starty,endx,endy) {
+    return "M"+startx+","+starty+"L"+endx+","+endy;
 }
 
 export default function Grid(props) {
@@ -142,6 +161,10 @@ export default function Grid(props) {
 
     const newComponent = (e) => {
         if(e.target.id === "fullGrid") {
+            if (lineout) {
+                activepath.remove()
+                lineout = false
+            }
             let rect = paper.draggableRect(e.clientX-50,e.clientY-126,props.activeComponent);
         }
     }
