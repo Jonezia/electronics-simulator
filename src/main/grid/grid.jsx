@@ -182,6 +182,8 @@ export default function Grid(props) {
     return(
         <div id="gridContainer">
             <svg id="fullGrid" onClick={newComponent}>
+            </svg>
+            <svg>
             <defs>
                 <g id="CellTemplate">
                     <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
