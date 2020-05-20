@@ -5,7 +5,7 @@ export default function Component(props) {
 
     let selected
     props.active ? selected = "selected" : selected = "unselected";
-
+    
     return(
         <div className={"componentContainer " + selected}
         onClick={()=>props.handleClick(props.name)}>

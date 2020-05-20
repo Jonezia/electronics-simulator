@@ -8,11 +8,10 @@ let componentsArray = ["Cell","Battery","DCPower","ACPower","Bulb","OpenSwitch",
 
 export default function Components(props) {
 
-    let [componentsInput,setComponentsInput] = useState();
+    let [componentsInput,setComponentsInput] = useState("");
 
     const handleChange = (e) => {
-        setComponentsInput(e.target.value)
-        console.log(componentsInput)
+        setComponentsInput(e.target.value);
     }
 
     const toggleComponents = () => {
@@ -40,8 +39,10 @@ export default function Components(props) {
             <div id="componentsListContainer">
                 <div id="componentsList">
                     {componentsArray.map((name,index) => {
-                        return <Component name={name} handleClick={props.changeActiveComponent}
-                        active={name === props.activeComponent} key={index}/>
+                        if (componentsInput === "" || name.toLowerCase().startsWith(componentsInput.toLowerCase())) {
+                            return <Component name={name} handleClick={props.changeActiveComponent}
+                            active={name === props.activeComponent} key={index}/>
+                        }
                     })}
                 </div>
             </div>

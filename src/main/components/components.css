@@ -61,5 +61,5 @@
 #componentsList {
     height: 100%;
     background-color: rgb(235, 246, 255);
-    overflow: scroll;
+    overflow-y: auto;
 }
