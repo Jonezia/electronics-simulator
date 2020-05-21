@@ -63,17 +63,15 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
         if (fromNode === toNode) {
             return
         }
-        // check if path already exists
-        for (let i in fromNode.paths) {
-            if (fromNode.paths[i][0] === toNode) {
-                return
-            }
+        // check if path already exists, if so then remove
+        if (!(fromNode.removePath(toNode) && toNode.removePath(fromNode))) {
+            // add path if doesn't already exist
+            let path = this.paper.path(this.getPathString(obj,directionFrom,directionTo))
+            .attr({fill:'none', stroke:'black', strokeWidth:1});
+            path.prependTo(this.paper);
+            fromNode.paths.push([toNode,path]);
+            toNode.paths.push([fromNode,path]);
         }
-        let path = this.paper.path(this.getPathString(obj,directionFrom,directionTo))
-        .attr({fill:'none', stroke:'black', strokeWidth:1});
-        path.prependTo(this.paper);
-        fromNode.paths.push([toNode,path]);
-        toNode.paths.push([fromNode,path]);
     }
 
     // twonodes class
@@ -121,7 +119,13 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
     }
 
     function removePath(obj) {
-        // DO THIS
+        for (let i in this.paths) {
+            if (this.paths[i][0] === obj) {
+                this.paths[i][1].remove();
+                this.paths.splice(i,1);
+                return true
+            }
+        }
     }
 
     // junction class
@@ -130,7 +134,8 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
         let junction = this.circle(x,y,r);
         junction.direction = direction;
         junction.click(onClick);
-        junction.paths = []
+        junction.paths = [];
+        junction.removePath = removePath;
         return junction
     }
 
