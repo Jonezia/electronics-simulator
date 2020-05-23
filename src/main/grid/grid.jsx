@@ -7,6 +7,10 @@ let lineout = false;
 let activepath;
 let activejunction;
 
+function XOR(a,b) {
+    return ((a && !b) || (!a && b))
+}
+
 Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
 
     // Define global element methods
@@ -35,8 +39,8 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
         let fromCoords;
         let toCoords;
         for (let key in node.paths) {
-            fromCoords = node.getCoordinates();
-            toCoords = node.paths[key][0].getCoordinates();
+            fromCoords = node.circle.getCoordinates();
+            toCoords = node.paths[key][0].circle.getCoordinates();
             node.paths[key][1].attr({"path":
                 pathStringify(fromCoords[0],fromCoords[1],toCoords[0],toCoords[1])
             });
@@ -51,10 +55,6 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
             updateNodePaths(this.bNode);
         }
         updateNodePaths(this.outNode);
-    }
-
-    function XOR(a,b) {
-        return ((a && !b) || (!a && b))
     }
 
     function updateValues() {
@@ -92,8 +92,8 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
     }
           
     function getPathString(obj,directionFrom,directionTo) {
-        let p1 = this[directionFrom + "Node"].getCoordinates();
-        let p2 = obj[directionTo + "Node"].getCoordinates();
+        let p1 = this[directionFrom + "Node"].circle.getCoordinates();
+        let p2 = obj[directionTo + "Node"].circle.getCoordinates();
         return pathStringify(p1[0],p1[1],p2[0],p2[1])
     }
 
@@ -181,11 +181,11 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
             lineout = false;
         }
         else {
-            let coords = this.getCoordinates();
+            let coords = this.circle.getCoordinates();
             activejunction = this;
-            activepath = this.paper.path(pathStringify(coords[0],coords[1],coords[0],coords[1]))
-            .attr({fill:'none', stroke:'black', strokeWidth:1, style: "pointer-events: None"});
-            activepath.prependTo(paper)
+            activepath = this.paper.path(pathStringify(coords[0],coords[1],coords[0],coords[1]));
+            activepath.attr({fill:'none', stroke:'black', strokeWidth:1});
+            activepath.prependTo(paper);
             lineout = true;
         }
     }
@@ -218,9 +218,10 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
     Paper.prototype.junction = function (direction,x,y) {
         let circle = this.circle(x,y,5);
         let text = this.text(x-3,y-8);
-        text.attr({"font-size": 10, "cursor": "default"})
+        text.attr({"font-size": 10, "cursor": "default", "pointer-events": "none"})
         let junction = this.g(circle,text);
         junction.text = text;
+        junction.circle = circle;
         junction.direction = direction;
         junction.value = null;
         junction.click(onClick);
@@ -239,7 +240,7 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
 function onMouseMove(e,x,y) {
     // update activepath
     if (lineout) {
-        let from = activejunction.getCoordinates()
+        let from = activejunction.circle.getCoordinates()
         activepath.attr({"path": pathStringify(from[0],from[1],x,y-76)})
     }
 }
