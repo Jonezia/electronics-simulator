@@ -120,6 +120,18 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
         }
     }
 
+    let rotationCount = 0
+    function rotate() {
+        rotationCount++;
+        let rotation = 360-(rotationCount%4)*90;
+        this.stop().transform(this.transform() + "r90");
+        if (this.nodeCount === 1) {
+            this.text.stop().transform(this.text.transform() + "r270");
+            this.outNode.text.stop().transform("r" + rotation);
+        }
+        this.updatePaths();
+    }
+
     // component class
 
     Paper.prototype.component = function (x, y, component, nodeCount) {
@@ -144,12 +156,18 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
             bNode.parent = g;
             g.bNode = bNode;
         } else {  // nodeCount === 1
+            let text;
             if (component === "OnesSource") {
-                outNode.updateValue(1)
-            } else if (component === "ZerosSource") {
-                outNode.updateValue(0)
+                text = this.text(55,55,1).transform("T"+x+","+y);
+                text.attr({"fill": "black", "cursor": "default"});
+                outNode.updateValue(1);
+            } else { // component === "ZerosSource"
+                text = this.text(55,55,0).transform("T"+x+","+y);
+                text.attr({"fill": "black", "cursor": "default"});
+                outNode.updateValue(0);
             }
-            g = this.g(body,outNode);
+            g = this.g(body,text,outNode);
+            g.text = text;
         }
         outNode.parent = g;
         g.outNode = outNode;
@@ -160,6 +178,7 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
 
         // functions
         g.drag(dragMove, dragStart, dragEnd);
+        g.dblclick(rotate);
         g.updatePaths = updatePaths;
         g.getPathString = getPathString;
         g.addPath = addPath;
@@ -281,13 +300,11 @@ export default function Grid(props) {
                 <g id="OnesSourceTemplate">
                     <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
                     <circle cx="60" cy="50" r="20"></circle>
-                    <text x="55" y="55" fill="black" style={{cursor: "default"}}>1</text>
                     <path d="M 80 50 L 100 50"></path>
                 </g>
                 <g id="ZerosSourceTemplate">
                     <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
                     <circle cx="60" cy="50" r="20"></circle>
-                    <text x="55" y="55" fill="black" style={{cursor: "default"}}>0</text>
                     <path d="M 80 50 L 100 50"></path>
                 </g>
                 <g id="ANDTemplate">
