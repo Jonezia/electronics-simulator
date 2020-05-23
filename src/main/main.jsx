@@ -27,7 +27,6 @@ export default function Main(props) {
             <Grid activeComponent={activeComponent}
             nodeCount={nodeCount}
             setClearPaper={props.setClearPaper}/>
-            <Parameters/>
         </div>
     )
 }
