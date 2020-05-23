@@ -58,9 +58,9 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
     }
 
     function updateValues() {
-        if (this.nodeCount === 2 && this.inNode.value) {
+        if (this.nodeCount === 2 && this.inNode.value !== null) {
             if (this.name === "Repeater") {
-                this.outNode.updateValue(this.inNode.value);
+                this.outNode.updateValue(this.inNode.value !== null);
             } else if (this.name === "NOT") {
                 this.outNode.updateValue((!this.inNode.value) ? 1:0);
             }
@@ -120,15 +120,19 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
         }
     }
 
-    let rotationCount = 0
     function rotate() {
-        rotationCount++;
-        let rotation = 360-(rotationCount%4)*90;
+        this.rotationCount++
+        let rotation = 360-(this.rotationCount%4)*90;
         this.stop().transform(this.transform() + "r90");
         if (this.nodeCount === 1) {
             this.text.stop().transform(this.text.transform() + "r270");
-            this.outNode.text.stop().transform("r" + rotation);
+        } else if (this.nodeCount === 2) {
+            this.inNode.text.stop().transform("r" + rotation);
+        } else if (this.nodeCount === 3) {
+            this.aNode.text.stop().transform("r" + rotation);
+            this.bNode.text.stop().transform("r" + rotation);
         }
+        this.outNode.text.stop().transform("r" + rotation);
         this.updatePaths();
     }
 
@@ -158,11 +162,11 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
         } else {  // nodeCount === 1
             let text;
             if (component === "OnesSource") {
-                text = this.text(55,55,1).transform("T"+x+","+y);
+                text = this.text(55,55,"1").transform("T"+x+","+y);
                 text.attr({"fill": "black", "cursor": "default"});
                 outNode.updateValue(1);
             } else { // component === "ZerosSource"
-                text = this.text(55,55,0).transform("T"+x+","+y);
+                text = this.text(55,55,"0").transform("T"+x+","+y);
                 text.attr({"fill": "black", "cursor": "default"});
                 outNode.updateValue(0);
             }
@@ -173,6 +177,7 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
         g.outNode = outNode;
 
         g.nodeCount = nodeCount;
+        g.rotationCount = 0;
         g.name = component;
         g.attr({fill: "white", stroke: "black", strokeWidth: 1});
 
