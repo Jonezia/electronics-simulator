@@ -52,6 +52,44 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
         }
         updateNodePaths(this.outNode);
     }
+
+    function XOR(a,b) {
+        return ((a && !b) || (!a && b))
+    }
+
+    function updateValues() {
+        if (this.nodeCount === 2 && this.inNode.value) {
+            if (this.name === "Repeater") {
+                this.outNode.updateValue(this.inNode.value);
+            } else if (this.name === "NOT") {
+                this.outNode.updateValue((!this.inNode.value) ? 1:0);
+            }
+        } else if (this.nodeCount === 3 && this.aNode.value !== null && this.bNode.value !== null) {
+            if (this.name === "AND") {
+                this.outNode.updateValue((this.aNode.value && this.bNode.value) ? 1:0);
+            } else if (this.name === "OR") {
+                this.outNode.updateValue((this.aNode.value || this.bNode.value) ? 1:0);
+            } else if (this.name === "NAND") {
+                this.outNode.updateValue((this.aNode.value && this.bNode.value) ? 0:1);
+            } else if (this.name === "NOR") {
+                this.outNode.updateValue((this.aNode.value || this.bNode.value) ? 0:1);
+            } else if (this.name === "XOR") {
+                this.outNode.updatetValue((XOR(this.aNode.value,this.bNode.value)) ? 1:0);
+            } else if (this.name === "XNOR") {
+                this.outNode.updateValue((XOR(this.aNode.value,this.bNode.value)) ? 0:1);
+            }
+        }
+    }
+
+    function propagate() {
+        this.updateValues();
+        if (this.outNode.value !== null) {
+            this.outNode.propagateOut();
+            for (let i in this.outNode.paths) {
+                this.outNode.paths[i][0].parent.propagate();
+            }
+        }
+    }
           
     function getPathString(obj,directionFrom,directionTo) {
         let p1 = this[directionFrom + "Node"].getCoordinates();
@@ -62,8 +100,8 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
     function addPath(obj,directionFrom,directionTo) {
         let fromNode = this[directionFrom + "Node"];
         let toNode = obj[directionTo + "Node"];
-        // check if trying to connect node to itself
-        if (fromNode === toNode) {
+        // prevent connection to same component
+        if (fromNode.parent === toNode.parent) {
             return
         }
         // check if path already exists, if so then remove
@@ -74,6 +112,11 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
             path.prependTo(this.paper);
             fromNode.paths.push([toNode,path]);
             toNode.paths.push([fromNode,path]);
+            if (fromNode.direction === "out") {
+                this.propagate();
+            } else if (toNode.direction === "out") {
+                obj.propagate();
+            }
         }
     }
 
@@ -101,19 +144,29 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
             bNode.parent = g;
             g.bNode = bNode;
         } else {  // nodeCount === 1
+            if (component === "OnesSource") {
+                outNode.updateValue(1)
+            } else if (component === "ZerosSource") {
+                outNode.updateValue(0)
+            }
             g = this.g(body,outNode);
         }
         outNode.parent = g;
         g.outNode = outNode;
-        g.nodeCount = nodeCount;
 
+        g.nodeCount = nodeCount;
+        g.name = component;
         g.attr({fill: "white", stroke: "black", strokeWidth: 1});
+
+        // functions
         g.drag(dragMove, dragStart, dragEnd);
         g.updatePaths = updatePaths;
         g.getPathString = getPathString;
         g.addPath = addPath;
         g.removePath = removePath;
-        
+        g.updateValues = updateValues;
+        g.propagate = propagate;
+
         return g;
     };
 
@@ -147,14 +200,35 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
         }
     }
 
+    function propagateOut() {
+        for (let i in this.paths) {
+            if (this.paths[i][0].direction !== "out") {
+                this.paths[i][0].updateValue(this.value);
+            }
+        }
+    }
+
+    function updateValue(value) {
+        this.value = value;
+        this.text.attr({text: value.toString()});
+    }
+
     // junction class
 
-    Paper.prototype.junction = function (direction,x,y,r=5) {
-        let junction = this.circle(x,y,r);
+    Paper.prototype.junction = function (direction,x,y) {
+        let circle = this.circle(x,y,5);
+        let text = this.text(x-3,y-8);
+        text.attr({"font-size": 10, "cursor": "default"})
+        let junction = this.g(circle,text);
+        junction.text = text;
         junction.direction = direction;
+        junction.value = null;
         junction.click(onClick);
         junction.paths = [];
+        // functions
         junction.removePath = removePath;
+        junction.updateValue = updateValue;
+        junction.propagateOut = propagateOut;
         return junction
     }
 
@@ -203,150 +277,17 @@ export default function Grid(props) {
             </svg>
             <svg>
             <defs>
-                <g id="CellTemplate">
-                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
-                    <path d="M 0 50 L 45 50"></path>
-                    <path d="M 45 25 L 45 75"></path>
-                    <path d="M 55 40 L 55 60"></path>
-                    <path d="M 55 50 L 100 50"></path>
-                </g>
-                <g id="BatteryTemplate">
-                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
-                    <path d="M 0 50 L 27 50"></path>
-                    <path d="M 27 25 L 27 75"></path>
-                    <path d="M 37 40 L 37 60"></path>
-                    <path d="M 37 50 L 43 50"></path>
-                    <path d="M 47 50 L 53 50"></path>
-                    <path d="M 57 50 L 63 50"></path>
-                    <path d="M 63 25 L 63 75"></path>
-                    <path d="M 73 40 L 73 60"></path>
-                    <path d="M 73 50 L 100 50"></path>
-                </g>
-                <g id="BulbTemplate">
-                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
-                    <path d="M 0 50 L 100 50"></path>
-                    <clipPath id="bulbMask"><circle cx="50" cy="50" r="20"></circle></clipPath>
-                    <circle cx="50" cy="50" r="20"></circle>
-                    <path d="M 30 30 L 70 70" clipPath="url(#bulbMask)"></path>
-                    <path d="M 70 30 L 30 70" clipPath="url(#bulbMask)"></path>
-                </g>
-                <g id="ResistorTemplate">
-                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
-                    <path d="M 0 50 L 100 50"></path>
-                    <rect x="20" y="40" width="60" height="20"></rect>
-                </g>
-                <g id="FuseTemplate">
-                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
-                    <rect x="20" y="40" width="60" height="20"></rect>
-                    <path d="M 0 50 L 100 50"></path>
-                </g>
-                <g id="OpenSwitchTemplate">
-                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
-                    <path d="M 0 50 L 15 50"></path>
-                    <path d="M 85 50 L 100 50"></path>
-                    <circle cx="15" cy="50" r="3"></circle>
-                    <circle cx="85" cy="50" r="3"></circle>
-                    <path d="M 15 47 L 85 30"></path>
-                </g>
-                <g id="ClosedSwitchTemplate">
-                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
-                    <path d="M 0 50 L 15 50"></path>
-                    <path d="M 85 50 L 100 50"></path>
-                    <circle cx="15" cy="50" r="3"></circle>
-                    <circle cx="85" cy="50" r="3"></circle>
-                    <path d="M 15 47 L 85 47"></path>
-                </g>
-                <g id="ThermistorTemplate">
-                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
-                    <path d="M 0 50 L 100 50"></path>
-                    <rect x="20" y="40" width="60" height="20"></rect>
-                    <path d="M 20 67 L 35 67"></path>
-                    <path d="M 35 67 L 80 33"></path>
-                </g>
-                <g id="VariableResistorTemplate">
-                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
-                    <path d="M 0 50 L 100 50"></path>
-                    <rect x="20" y="40" width="60" height="20"></rect>
-                    <path d="M 20 70 L 80 30"></path>
-                    <path d="M 80 30 L 73 30"></path>
-                    <path d="M 80 30 L 80 35"></path>
-                </g>
-                <g id="VoltmeterTemplate">
-                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
-                    <path d="M 0 50 L 100 50"></path>
-                    <circle cx="50" cy="50" r="20"></circle>
-                    <path d="M 50 60 L 40 40"></path>
-                    <path d="M 50 60 L 60 40"></path>
-                </g>
-                <g id="AmmeterTemplate">
-                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
-                    <path d="M 0 50 L 100 50"></path>
-                    <circle cx="50" cy="50" r="20"></circle>
-                    <path d="M 50 40 L 40 60"></path>
-                    <path d="M 50 40 L 60 60"></path>
-                    <clipPath id="ammeterMask"><polygon points="50,40 40,60 60,60"></polygon></clipPath>
-                    <path d="M 0 50 L 100 50" clipPath="url(#ammeterMask)"></path>
-                </g>
-                <g id="DiodeTemplate">
-                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
-                    <path d="M 0 50 L 100 50"></path>
-                    <polygon points="63,50 37,35 37,65"></polygon>
-                    <path d="M 63 35 63 65"></path>
-                </g>
-                <g id="LEDTemplate">
-                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
-                    <circle cx="50" cy="50" r="20"></circle>
-                    <path d="M 0 50 L 100 50"></path>
-                    <polygon points="56.5,50 43.5,42.5 43.5,57.5"></polygon>
-                    <path d="M 56.5 42.5 56.5 57.5"></path>
-                    <path d="M 67 28 L 75 20"></path>
-                    <path d="M 75 20 L 72 20"></path>
-                    <path d="M 75 20 L 75 23"></path>
-                    <path d="M 72 33 L 80 25"></path>
-                    <path d="M 80 25 L 77 25"></path>
-                    <path d="M 80 25 L 80 28"></path>
-                </g>
-                <g id="LDRTemplate">
-                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
-                    <circle cx="50" cy="50" r="20"></circle>
-                    <path d="M 0 50 L 100 50"></path>
-                    <rect x="35" y="45" width="30" height="10"></rect>
-                    <path d="M 33 28 L 25 20"></path>
-                    <path d="M 33 28 L 30 28"></path>
-                    <path d="M 33 28 L 33 25"></path>
-                    <path d="M 28 33 L 20 25"></path>
-                    <path d="M 28 33 L 25 33"></path>
-                    <path d="M 28 33 L 28 30"></path>
-                </g>
-                <g id="DCPowerTemplate">
-                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
-                    <path d="M 0 50 L 30 50"></path>
-                    <path d="M 70 50 L 100 50"></path>
-                    <circle cx="30" cy="50" r="3"></circle>
-                    <circle cx="70" cy="50" r="3"></circle>
-                    <path d="M 30 44 L 30 38"></path>
-                    <path d="M 27 41 L 33 41"></path>
-                    <path d="M 67 41 L 73 41"></path>
-                </g>
                 <g id="OnesSourceTemplate">
                     <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
                     <circle cx="60" cy="50" r="20"></circle>
-                    <text x="55" y="55" fill="black">1</text>
+                    <text x="55" y="55" fill="black" style={{cursor: "default"}}>1</text>
                     <path d="M 80 50 L 100 50"></path>
                 </g>
                 <g id="ZerosSourceTemplate">
                     <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
                     <circle cx="60" cy="50" r="20"></circle>
-                    <text x="55" y="55" fill="black">0</text>
+                    <text x="55" y="55" fill="black" style={{cursor: "default"}}>0</text>
                     <path d="M 80 50 L 100 50"></path>
-                </g>
-                <g id="ACPowerTemplate">
-                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
-                    <path d="M 0 50 L 30 50"></path>
-                    <path d="M 70 50 L 100 50"></path>
-                    <circle cx="30" cy="50" r="3"></circle>
-                    <circle cx="70" cy="50" r="3"></circle>
-                    <path d="M 40 50 L 40 50 A 5 5 0 0 0 50 50 A 5 5 0 1 1 60 50" fill="none"></path>
                 </g>
                 <g id="ANDTemplate">
                     <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
@@ -401,6 +342,12 @@ export default function Grid(props) {
                     <path d="M 28 30 l 36 20 l -36 20 Z"></path>
                     <circle cx="68" cy="50" r="4"></circle>
                     <path d="M 72 50 L 100 50"></path>
+                </g>
+                <g id="RepeaterTemplate">
+                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
+                    <path d="M 0 50 L 32 50"></path>
+                    <path d="M 32 30 l 36 20 l -36 20 Z"></path>
+                    <path d="M 68 50 L 100 50"></path>
                 </g>
             </defs>
             </svg>
