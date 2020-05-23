@@ -4,7 +4,8 @@ import React,{useState} from 'react'
 import Component from './component/component'
 
 let componentsArray = ["Cell","Battery","DCPower","ACPower","Bulb","OpenSwitch","ClosedSwitch","Diode","LED",
-"Resistor","VariableResistor","Thermistor","LDR","Fuse","Voltmeter","Ammeter"]
+"Resistor","VariableResistor","Thermistor","LDR","Fuse","Voltmeter","Ammeter","OnesSource","ZerosSource",
+"AND","OR","NOT","NAND","NOR","XOR","XNOR"]
 
 export default function Components(props) {
 

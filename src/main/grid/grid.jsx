@@ -16,7 +16,7 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
         return [(bb.left+bb.right)/2,(bb.top+bb.bottom)/2-76];
     }
 
-    // Define methods for twonodes snap class
+    // Define methods for component snap class
 
     function dragStart(x, y, e) {
         this.current_transform = this.transform();
@@ -31,34 +31,37 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
         this.current_transform = this.transform();
     }
 
-    function updatePaths() {
+    function updateNodePaths(node) {
         let fromCoords;
         let toCoords;
-        for (let key in this.inNode.paths) {
-            fromCoords = this.inNode.getCoordinates()
-            toCoords = this.inNode.paths[key][0].getCoordinates()
-            this.inNode.paths[key][1].attr({"path":
+        for (let key in node.paths) {
+            fromCoords = node.getCoordinates();
+            toCoords = node.paths[key][0].getCoordinates();
+            node.paths[key][1].attr({"path":
                 pathStringify(fromCoords[0],fromCoords[1],toCoords[0],toCoords[1])
-            })
+            });
         }
-        for (let key in this.outNode.paths) {
-            fromCoords = this.outNode.getCoordinates()
-            toCoords = this.outNode.paths[key][0].getCoordinates()
-            this.outNode.paths[key][1].attr({"path":
-                pathStringify(fromCoords[0],fromCoords[1],toCoords[0],toCoords[1])
-            })
+    }
+
+    function updatePaths() {
+        if (this.nodeCount === 2) {
+            updateNodePaths(this.inNode);
+        } else if (this.nodeCount === 3) {
+            updateNodePaths(this.aNode);
+            updateNodePaths(this.bNode);
         }
+        updateNodePaths(this.outNode);
     }
           
     function getPathString(obj,directionFrom,directionTo) {
-        let p1 = (directionFrom === "in") ? this.inNode.getCoordinates() : this.outNode.getCoordinates();
-        let p2 = (directionTo === "in") ? obj.inNode.getCoordinates() : obj.outNode.getCoordinates();
+        let p1 = this[directionFrom + "Node"].getCoordinates();
+        let p2 = obj[directionTo + "Node"].getCoordinates();
         return pathStringify(p1[0],p1[1],p2[0],p2[1])
     }
 
     function addPath(obj,directionFrom,directionTo) {
-        let fromNode = (directionFrom === "in") ? this.inNode : this.outNode;
-        let toNode = (directionTo === "in") ? obj.inNode : obj.outNode;
+        let fromNode = this[directionFrom + "Node"];
+        let toNode = obj[directionTo + "Node"];
         // check if trying to connect node to itself
         if (fromNode === toNode) {
             return
@@ -74,20 +77,36 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
         }
     }
 
-    // twonodes class
+    // component class
 
-    Paper.prototype.twonodes = function (x, y, component) {
+    Paper.prototype.component = function (x, y, component, nodeCount) {
+        let g;
         let body = this.use(`${component}Template`).transform("T"+x+","+y);
         let bb = body.node.getBoundingClientRect();
         let h = bb.bottom - bb.top;
         let w = bb.right - bb.left;
-        let inNode = paper.junction("in",0,h/2,5).transform("T"+x+","+y);
-        let outNode = paper.junction("out",w,h/2,5).transform("T"+x+","+y);
-        let g = this.g(body,inNode,outNode);
-        inNode.parent = g
-        outNode.parent = g
-        g.inNode = inNode;
+
+        let outNode = paper.junction("out",w,h/2).transform("T"+x+","+y);
+        if (nodeCount === 2) {
+            let inNode = paper.junction("in",0,h/2).transform("T"+x+","+y);
+            g = this.g(body,inNode,outNode);
+            inNode.parent = g;
+            g.inNode = inNode;
+        } else if (nodeCount === 3) {
+            let aNode = paper.junction("a",0,h*0.35).transform("T"+x+","+y);
+            let bNode = paper.junction("b",0,h*0.65).transform("T"+x+","+y);
+            g = this.g(body,aNode,bNode,outNode);
+            aNode.parent = g;
+            g.aNode = aNode;
+            bNode.parent = g;
+            g.bNode = bNode;
+        } else {  // nodeCount === 1
+            g = this.g(body,outNode);
+        }
+        outNode.parent = g;
         g.outNode = outNode;
+        g.nodeCount = nodeCount;
+
         g.attr({fill: "white", stroke: "black", strokeWidth: 1});
         g.drag(dragMove, dragStart, dragEnd);
         g.updatePaths = updatePaths;
@@ -130,7 +149,7 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
 
     // junction class
 
-    Paper.prototype.junction = function (direction,x,y,r) {
+    Paper.prototype.junction = function (direction,x,y,r=5) {
         let junction = this.circle(x,y,r);
         junction.direction = direction;
         junction.click(onClick);
@@ -159,14 +178,7 @@ export default function Grid(props) {
 
     useEffect(() => {
         paper = Snap("#fullGrid");
-        let rect1 = paper.twonodes(500,200,"Cell")
-        let rect2 = paper.twonodes(300,400,"Resistor")
-        let rect3 = paper.twonodes(700,400,"Bulb")
-        rect1.addPath(rect2,"in","out")
-        rect1.addPath(rect3,"out","in")
-        
         paper.mousemove(onMouseMove)
-
     },[]);
 
     const newComponent = (e) => {
@@ -175,7 +187,8 @@ export default function Grid(props) {
                 activepath.remove()
                 lineout = false
             }
-            let rect = paper.twonodes(e.clientX-50,e.clientY-126,props.activeComponent);
+            let rect = paper.component(e.clientX-50,e.clientY-126,
+                props.activeComponent,props.nodeCount);
         }
     }
 
@@ -315,6 +328,18 @@ export default function Grid(props) {
                     <path d="M 27 41 L 33 41"></path>
                     <path d="M 67 41 L 73 41"></path>
                 </g>
+                <g id="OnesSourceTemplate">
+                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
+                    <circle cx="60" cy="50" r="20"></circle>
+                    <text x="55" y="55" fill="black">1</text>
+                    <path d="M 80 50 L 100 50"></path>
+                </g>
+                <g id="ZerosSourceTemplate">
+                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
+                    <circle cx="60" cy="50" r="20"></circle>
+                    <text x="55" y="55" fill="black">0</text>
+                    <path d="M 80 50 L 100 50"></path>
+                </g>
                 <g id="ACPowerTemplate">
                     <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
                     <path d="M 0 50 L 30 50"></path>
@@ -322,6 +347,60 @@ export default function Grid(props) {
                     <circle cx="30" cy="50" r="3"></circle>
                     <circle cx="70" cy="50" r="3"></circle>
                     <path d="M 40 50 L 40 50 A 5 5 0 0 0 50 50 A 5 5 0 1 1 60 50" fill="none"></path>
+                </g>
+                <g id="ANDTemplate">
+                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
+                    <path d="M 0 35 L 20 35"></path>
+                    <path d="M 0 65 L 20 65"></path>
+                    <path d="M 20 25 h 30 q 30 0, 30 25 q 0 25, -30 25 h -30 Z"></path>
+                    <path d="M 80 50 L 100 50"></path>
+                </g>
+                <g id="NANDTemplate">
+                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
+                    <path d="M 0 35 L 16 35"></path>
+                    <path d="M 0 65 L 16 65"></path>
+                    <path d="M 16 25 h 30 q 30 0, 30 25 q 0 25, -30 25 h -30 Z"></path>
+                    <circle cx="80" cy="50" r="4"></circle>
+                    <path d="M 84 50 L 100 50"></path>
+                </g>
+                <g id="ORTemplate">
+                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
+                    <path d="M 0 35 L 30 35"></path>
+                    <path d="M 0 65 L 30 65"></path>
+                    <path d="M 20 25 q 60 10, 60 25 q 0 15, -60 25 q 25 -25, 0 -50 Z"></path>
+                    <path d="M 80 50 L 100 50"></path>
+                </g>
+                <g id="NORTemplate">
+                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
+                    <path d="M 0 35 L 26 35"></path>
+                    <path d="M 0 65 L 26 65"></path>
+                    <path d="M 16 25 q 60 10, 60 25 q 0 15, -60 25 q 25 -25, 0 -50 Z"></path>
+                    <circle cx="80" cy="50" r="4"></circle>
+                    <path d="M 84 50 L 100 50"></path>
+                </g>
+                <g id="XORTemplate">
+                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
+                    <path d="M 0 35 L 33 35"></path>
+                    <path d="M 0 65 L 33 65"></path>
+                    <path d="M 23 25 q 60 10, 60 25 q 0 15, -60 25 q 25 -25, 0 -50 Z"></path>
+                    <path d="M 17 25 q 25 25, 0 50" fill="none"></path>
+                    <path d="M 83 50 L 100 50"></path>
+                </g>
+                <g id="XNORTemplate">
+                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
+                    <path d="M 0 35 L 29 35"></path>
+                    <path d="M 0 65 L 29 65"></path>
+                    <path d="M 19 25 q 60 10, 60 25 q 0 15, -60 25 q 25 -25, 0 -50 Z"></path>
+                    <path d="M 13 25 q 25 25, 0 50" fill="none"></path>
+                    <circle cx="83" cy="50" r="4"></circle>
+                    <path d="M 87 50 L 100 50"></path>
+                </g>
+                <g id="NOTTemplate">
+                    <rect x="0" y="0" width="100" height="100" visibility="hidden"></rect>
+                    <path d="M 0 50 L 28 50"></path>
+                    <path d="M 28 30 l 36 20 l -36 20 Z"></path>
+                    <circle cx="68" cy="50" r="4"></circle>
+                    <path d="M 72 50 L 100 50"></path>
                 </g>
             </defs>
             </svg>

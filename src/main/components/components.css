@@ -6,6 +6,7 @@
     box-shadow: 1px 0px rgb(146, 146, 146);
     display: flex;
     flex-direction: column;
+    overflow: visible;
 }
 
 .maximised {
@@ -61,5 +62,5 @@
 #componentsList {
     height: 100%;
     background-color: rgb(235, 246, 255);
-    overflow-y: auto;
+    overflow-y: hidden;
 }

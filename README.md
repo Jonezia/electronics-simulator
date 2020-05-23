@@ -9,3 +9,5 @@ How to use:
 - Click on the junctions on either side of a component to begin creating a connection. Move the mouse and click on another junction to create a connection. The same connection cannot be made twice. A junction cannot be connected to itself.
 - To delete a connection, click on one of the junctions, then the other junction.
 - Click the New button on the toolbar above to clear the paper.
+
+All SVG elements created by me.

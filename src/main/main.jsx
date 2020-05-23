@@ -7,9 +7,17 @@ import Parameters from './parameters/parameters'
 export default function Main(props) {
 
     let [activeComponent,setActiveComponent] = useState("Cell");
+    let [nodeCount,setNodeCount] = useState(2);
 
     const changeActiveComponent = (newComponent) => {
-        setActiveComponent(newComponent)
+        if (["OnesSource","ZerosSource"].includes(newComponent)) {
+            setNodeCount(1)
+        } else if (["AND","OR","NOT","NAND","NOR","XOR","XNOR"].includes(newComponent)) {
+            setNodeCount(3)
+        } else {
+            setNodeCount(2)
+        }
+        setActiveComponent(newComponent);
     }
 
     return(
@@ -17,6 +25,7 @@ export default function Main(props) {
             <Components changeActiveComponent={changeActiveComponent}
             activeComponent={activeComponent}/>
             <Grid activeComponent={activeComponent}
+            nodeCount={nodeCount}
             setClearPaper={props.setClearPaper}/>
             <Parameters/>
         </div>
