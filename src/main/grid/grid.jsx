@@ -64,7 +64,7 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
                 this.outNode.updateValue(null);
             } else {
                 if (this.name === "Repeater") {
-                    this.outNode.updateValue(this.inNode.value !== null);
+                    this.outNode.updateValue((this.inNode.value) ? 1:0);
                 } else if (this.name === "NOT") {
                     this.outNode.updateValue((!this.inNode.value) ? 1:0);
                 }
