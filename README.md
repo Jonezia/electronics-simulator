@@ -14,3 +14,5 @@ How to use:
 
 Strange things may happen if you connect components in a strange way. If you cause an infinite feeback loop, the app will crash due to stack overflow, as the values of components are calculated recursively.
 All SVG elements created by me.
+
+Demo link: https://www.youtube.com/watch?v=LSdy-HfuXYM&feature=youtu.be
