@@ -3,6 +3,7 @@ import React,{useEffect} from 'react'
 import Snap from 'snapsvg-cjs'
 
 let paper;
+let stack;
 let lineout = false;
 let activepath;
 let activejunction;
@@ -97,7 +98,7 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
         return pathStringify(p1[0],p1[1],p2[0],p2[1])
     }
 
-    function addPath(obj,directionFrom,directionTo) {
+    function addPath(obj,directionFrom,directionTo,stackAppend=true) {
         let fromNode = this[directionFrom + "Node"];
         let toNode = obj[directionTo + "Node"];
         // prevent connection to same component
@@ -105,18 +106,21 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
             return
         }
         // check if path already exists, if so then remove
-        if (!(fromNode.removePath(toNode) && toNode.removePath(fromNode))) {
+        if (!(fromNode.removePath(toNode,false))) {
             // add path if doesn't already exist
-            let path = this.paper.path(this.getPathString(obj,directionFrom,directionTo))
+            let path = paper.path(this.getPathString(obj,directionFrom,directionTo))
             .attr({fill:'none', stroke:'black', strokeWidth:1});
-            path.prependTo(this.paper);
+            path.prependTo(paper);
             fromNode.paths.push([toNode,path]);
             toNode.paths.push([fromNode,path]);
-            if (fromNode.direction === "out") {
-                this.propagate();
-            } else if (toNode.direction === "out") {
-                obj.propagate();
+            if (stackAppend) {
+                stack.append(["pathAdd",this,obj,directionFrom,directionTo])
             }
+        }
+        if (fromNode.direction === "out") {
+            this.propagate();
+        } else if (toNode.direction === "out") {
+            obj.propagate();
         }
     }
 
@@ -214,14 +218,26 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
         }
     }
 
-    function removePath(obj) {
+    function removePath(obj,stackAppend=true) {
+        let pathRemoved = false;
         for (let i in this.paths) {
             if (this.paths[i][0] === obj) {
                 this.paths[i][1].remove();
                 this.paths.splice(i,1);
-                return true
+                pathRemoved = true;
             }
         }
+        for (let i in obj.paths) {
+            if (obj.paths[i][0] === this) {
+                obj.paths[i][1].remove();
+                obj.paths.splice(i,1);
+                pathRemoved = true;
+            }
+        }
+        if (stackAppend) {
+            stack.append(["pathRemove",this.parent,obj.parent,this.direction,obj.direction])
+        }
+        return pathRemoved
     }
 
     function propagateOut() {
@@ -273,11 +289,65 @@ function pathStringify(startx,starty,endx,endy) {
     return "M"+startx+","+starty+"L"+endx+","+endy;
 }
 
+// Stack Class
+
+class Stack {
+    constructor() {
+        this.data = [];
+        this.pointer = 0;
+    }
+    append(x) {
+        this.data = this.data.slice(0,this.pointer);
+        this.data.push(x);
+        this.pointer++;
+    }
+    addPointerPath() {
+        let obj = this.data[this.pointer];
+        obj[1].addPath(obj[2],obj[3],obj[4],false)
+    }
+    removePointerPath() {
+        let obj = this.data[this.pointer];
+        obj[1][obj[3] + "Node"].removePath(obj[2][obj[4] + "Node"],false);
+    }
+    addPointerComponent() {
+        this.data[this.pointer][1].attr({"visibility": "visible"})
+    }
+    removePointerComponent() {
+        this.data[this.pointer][1].attr({"visibility": "hidden"})
+    }
+    undo() {
+        if (this.pointer === 0) {
+            return
+        }
+        this.pointer--;
+        if (this.data[this.pointer][0] === "component") {
+            this.removePointerComponent()
+        } else if (this.data[this.pointer][0] === "pathAdd") {
+            this.removePointerPath()
+        } else if (this.data[this.pointer][0] === "pathRemove") {
+            this.addPointerPath()
+        }
+    }
+    redo() {
+        if (this.pointer === this.data.length) {
+            return
+        }
+        if (this.data[this.pointer][0] === "component") {
+            this.addPointerComponent()
+        } else if (this.data[this.pointer][0] === "pathAdd") {
+            this.addPointerPath()
+        } else if (this.data[this.pointer][0] === "pathRemove") {
+            this.removePointerPath()
+        }
+        this.pointer++
+    }
+}
+
 // Grid component
 
 export default function Grid(props) {
 
-    const addComponent = (e) => {
+    const handleClick = (e) => {
         if(e.target.id === "fullGrid") {
             if (lineout) {
                 activepath.remove();
@@ -285,6 +355,7 @@ export default function Grid(props) {
             }
             let rect = paper.component(e.clientX-50,e.clientY-126,
                 props.activeComponent,props.nodeCount);
+            stack.append(["component",rect]);
         }
     }
 
@@ -293,16 +364,17 @@ export default function Grid(props) {
     }
 
     const undo = () => {
-        console.log("undo");
+        stack.undo()
     }
 
     const redo = () => {
-        console.log("redo");
+        stack.redo()
     }
 
     useEffect(() => {
         paper = Snap("#fullGrid");
         paper.mousemove(onMouseMove);
+        stack = new Stack();
         document.getElementById("undoButton").addEventListener("click",undo);
         document.getElementById("redoButton").addEventListener("click",redo);
         document.getElementById("newButton").addEventListener("click",clearPaper)
@@ -310,7 +382,7 @@ export default function Grid(props) {
 
     return(
         <div id="gridContainer">
-            <svg id="fullGrid" onClick={addComponent}>
+            <svg id="fullGrid" onClick={handleClick}>
             </svg>
             <svg>
             <defs>

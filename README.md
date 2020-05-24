@@ -10,6 +10,7 @@ How to use:
 - To delete a connection, click on one of the junctions, then the other junction.
 - Double click a component to rotate it by 90 degrees clockwise.
 - Click the New button on the toolbar above to clear the paper.
+- The Undo and Redo buttons on the toolbar work only for adding and removing elements, not moving them around. As expected, adding a new component will cause a new "save", thus overriding all the "future" elements of the stack. (i.e. if we move back in history using undo, then add a new component, redo will not bring back states we moved over while moving back in history)
 
 Strange things may happen if you connect components in a strange way. If you cause an infinite feeback loop, the app will crash due to stack overflow, as the values of components are calculated recursively.
 All SVG elements created by me.
