@@ -59,25 +59,33 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
     }
 
     function updateValues() {
-        if (this.nodeCount === 2 && this.inNode.value !== null) {
-            if (this.name === "Repeater") {
-                this.outNode.updateValue(this.inNode.value !== null);
-            } else if (this.name === "NOT") {
-                this.outNode.updateValue((!this.inNode.value) ? 1:0);
+        if (this.nodeCount === 2) {
+            if (this.inNode.value === null) {
+                this.outNode.updateValue(null);
+            } else {
+                if (this.name === "Repeater") {
+                    this.outNode.updateValue(this.inNode.value !== null);
+                } else if (this.name === "NOT") {
+                    this.outNode.updateValue((!this.inNode.value) ? 1:0);
+                }
             }
-        } else if (this.nodeCount === 3 && this.aNode.value !== null && this.bNode.value !== null) {
-            if (this.name === "AND") {
-                this.outNode.updateValue((this.aNode.value && this.bNode.value) ? 1:0);
-            } else if (this.name === "OR") {
-                this.outNode.updateValue((this.aNode.value || this.bNode.value) ? 1:0);
-            } else if (this.name === "NAND") {
-                this.outNode.updateValue((this.aNode.value && this.bNode.value) ? 0:1);
-            } else if (this.name === "NOR") {
-                this.outNode.updateValue((this.aNode.value || this.bNode.value) ? 0:1);
-            } else if (this.name === "XOR") {
-                this.outNode.updatetValue((XOR(this.aNode.value,this.bNode.value)) ? 1:0);
-            } else if (this.name === "XNOR") {
-                this.outNode.updateValue((XOR(this.aNode.value,this.bNode.value)) ? 0:1);
+        } else if (this.nodeCount === 3) {
+            if (this.aNode.value === null || this.bNode.value === null) {
+                this.outNode.updateValue(null);
+            } else {
+                if (this.name === "AND") {
+                    this.outNode.updateValue((this.aNode.value && this.bNode.value) ? 1:0);
+                } else if (this.name === "OR") {
+                    this.outNode.updateValue((this.aNode.value || this.bNode.value) ? 1:0);
+                } else if (this.name === "NAND") {
+                    this.outNode.updateValue((this.aNode.value && this.bNode.value) ? 0:1);
+                } else if (this.name === "NOR") {
+                    this.outNode.updateValue((this.aNode.value || this.bNode.value) ? 0:1);
+                } else if (this.name === "XOR") {
+                    this.outNode.updateValue((XOR(this.aNode.value,this.bNode.value)) ? 1:0);
+                } else if (this.name === "XNOR") {
+                    this.outNode.updateValue((XOR(this.aNode.value,this.bNode.value)) ? 0:1);
+                }
             }
         }
     }
@@ -119,8 +127,10 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
         }
         if (fromNode.direction === "out") {
             this.propagate();
+            obj.updateValues()
         } else if (toNode.direction === "out") {
             obj.propagate();
+            this.updateValues();
         }
     }
 
@@ -224,6 +234,10 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
             if (this.paths[i][0] === obj) {
                 this.paths[i][1].remove();
                 this.paths.splice(i,1);
+                if (this.direction === "out") {
+                    obj.updateValue(null);
+                    this.parent.updateValues();
+                }
                 pathRemoved = true;
             }
         }
@@ -231,6 +245,10 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
             if (obj.paths[i][0] === this) {
                 obj.paths[i][1].remove();
                 obj.paths.splice(i,1);
+                if (obj.direction === "out") {
+                    this.updateValue(null);
+                    this.parent.updateValues();
+                }
                 pathRemoved = true;
             }
         }
@@ -250,7 +268,12 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
 
     function updateValue(value) {
         this.value = value;
-        this.text.attr({text: value.toString()});
+        if (value === null) {
+            this.text.attr({text: ""});
+        }
+        else {
+            this.text.attr({text: value.toString()});
+        }
     }
 
     // junction class
