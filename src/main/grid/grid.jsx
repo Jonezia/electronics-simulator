@@ -264,8 +264,8 @@ Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
 function onMouseMove(e,x,y) {
     // update activepath
     if (lineout) {
-        let from = activejunction.circle.getCoordinates()
-        activepath.attr({"path": pathStringify(from[0],from[1],x,y-76)})
+        let from = activejunction.circle.getCoordinates();
+        activepath.attr({"path": pathStringify(from[0],from[1],x,y-76)});
     }
 }
 
@@ -273,18 +273,15 @@ function pathStringify(startx,starty,endx,endy) {
     return "M"+startx+","+starty+"L"+endx+","+endy;
 }
 
+// Grid component
+
 export default function Grid(props) {
 
-    useEffect(() => {
-        paper = Snap("#fullGrid");
-        paper.mousemove(onMouseMove)
-    },[]);
-
-    const newComponent = (e) => {
+    const addComponent = (e) => {
         if(e.target.id === "fullGrid") {
             if (lineout) {
-                activepath.remove()
-                lineout = false
+                activepath.remove();
+                lineout = false;
             }
             let rect = paper.component(e.clientX-50,e.clientY-126,
                 props.activeComponent,props.nodeCount);
@@ -294,11 +291,26 @@ export default function Grid(props) {
     const clearPaper = () => {
         paper.clear()
     }
-    props.setClearPaper(clearPaper)
+
+    const undo = () => {
+        console.log("undo");
+    }
+
+    const redo = () => {
+        console.log("redo");
+    }
+
+    useEffect(() => {
+        paper = Snap("#fullGrid");
+        paper.mousemove(onMouseMove);
+        document.getElementById("undoButton").addEventListener("click",undo);
+        document.getElementById("redoButton").addEventListener("click",redo);
+        document.getElementById("newButton").addEventListener("click",clearPaper)
+    },[]);
 
     return(
         <div id="gridContainer">
-            <svg id="fullGrid" onClick={newComponent}>
+            <svg id="fullGrid" onClick={addComponent}>
             </svg>
             <svg>
             <defs>

@@ -9,6 +9,7 @@
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-scripts": "3.4.1",
+    "snap.svg.zpd": "0.0.11",
     "snapsvg": "^0.5.1",
     "snapsvg-cjs": "0.0.6"
   },
